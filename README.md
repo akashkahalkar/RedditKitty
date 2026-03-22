@@ -2,11 +2,26 @@
 
 **Reddit Kitty** is a premium, high-performance iOS application designed for seamless Reddit media consumption. It specializes in scraping and displaying images, galleries, and high-quality videos from subreddits and user profiles with a focus on speed and aesthetic excellence.
 
+<table>
+<tr>
+<td>
+<img src = "./screenshots/Home.PNG" width = "200" />            
+</td>
+<td>
+<img src = "./screenshots/FeedView.PNG" width = "200" />
+</td>
+<td>
+<img src = "./screenshots/SettingsView.PNG" width = "200" /> 
+</td>
+</tr>
+</table>
+
 ---
 
 ## ✨ Key Features
 
 ### 📸 Advanced Media Scraping
+- **No Login Required**: Seamlessly scrape subreddits and user profiles without needing a Reddit account or API keys.
 - **Image Galleries**: Automatically extracts and displays multiple Hi-Res images from Reddit gallery posts.
 - **High-Definition Video**: Supports HLS streaming and MP4 fallback for a smooth video playback experience.
 
@@ -31,6 +46,8 @@
 ---
 
 ## 🚀 Getting Started
+
+*No Reddit login or API keys required to browse/scrape!*
 
 1.  **Clone the Repository**:
     ```bash
