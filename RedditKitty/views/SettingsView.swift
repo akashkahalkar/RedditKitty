@@ -22,7 +22,7 @@ struct SettingsView: View {
                 }
 
                 Section("Appearance") {
-                    ColorPicker("Alignment Guides", selection: selectedTintOption)
+                    ColorPicker("Theme Color", selection: selectedTintOption)
                     Toggle(isOn: $autoPlayvideos) {
                         Text("Auto play videos")
                     }

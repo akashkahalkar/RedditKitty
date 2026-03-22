@@ -11,7 +11,7 @@
 <img src = "./screenshots/FeedView.PNG" width = "200" />
 </td>
 <td>
-<img src = "./screenshots/SettingsView.PNG" width = "200" /> 
+<img src = "./screenshots/Settings.PNG" width = "200" /> 
 </td>
 </tr>
 </table>
