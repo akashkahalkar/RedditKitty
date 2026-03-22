@@ -54,11 +54,22 @@ struct MediaViewerView: View {
 
     private var viewerStack: some View {
         ZStack {
-            mediaPager
-            VStack {
-                headerSection
+            HStack {
                 Spacer()
-                footerSection
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+            }
+            mediaPager
+            if isUIVisible {
+                VStack {
+                    Spacer()
+                    infoSection
+                }
             }
         }
         .offset(y: dragOffset.height)
@@ -66,21 +77,18 @@ struct MediaViewerView: View {
     }
 
     @ViewBuilder
-    private var headerSection: some View {
-        if isUIVisible {
-            MediaViewerHeaderView(
-                item: currentItem,
-                currentIndex: currentIndex,
-                totalCount: items.count,
-                isDownloadingMedia: isDownloadingMedia,
-                onDownloadMedia: onDownloadMediaAction
-            )
-            .padding(.horizontal)
-            .padding(.top, 50)
-            .padding(.bottom, 12)
-            .background(Color.black.opacity(0.4))
-            .zIndex(1)
-        }
+    private var infoSection: some View {
+        MediaInfoView(
+            item: currentItem,
+            currentIndex: currentIndex,
+            totalCount: items.count,
+            isDownloadingMedia: isDownloadingMedia,
+            onDownloadMedia: onDownloadMediaAction
+        )
+        .padding(.horizontal)
+        .padding(.bottom, 12)
+        .background(Color.black.opacity(0.4))
+        .zIndex(1)
     }
 
     private var mediaPager: some View {
@@ -100,7 +108,9 @@ struct MediaViewerView: View {
                     .id(index)
                     .containerRelativeFrame(.horizontal)
                     .onTapGesture {
-                        isUIVisible.toggle()
+                        withAnimation(.easeIn) {
+                            isUIVisible.toggle()
+                        }
                     }
                 }
             }
@@ -115,14 +125,6 @@ struct MediaViewerView: View {
         .simultaneousGesture(mediaDragGesture)
         .onChange(of: currentIndex) { _, _ in
             setShouldPlayActiveVideo(autoPlayVideo)
-        }
-    }
-
-    @ViewBuilder
-    private var footerSection: some View {
-        if isUIVisible {
-            MediaViewerFooterView(item: currentItem)
-                .padding(.bottom, 30)
         }
     }
 
