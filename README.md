@@ -38,9 +38,9 @@
 - **Media Downloader**: Save images and videos directly to your device.
 
 ### ⚙️ Settings
-- **Themeing option very basic
-- **Option to select page size for fetching posts
-- **Option to enable disable autoplay for videos
+- Themeing option very basic
+- Option to select page size for fetching posts
+- Option to enable disable autoplay for videos
 
 ---
 
