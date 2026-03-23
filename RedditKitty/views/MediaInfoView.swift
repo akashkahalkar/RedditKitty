@@ -6,6 +6,9 @@ struct MediaInfoView: View {
     let totalCount: Int
     let isDownloadingMedia: Bool
     let onDownloadMedia: (() -> Void)?
+    let isEnhancingCurrentItem: Bool
+    let isCurrentItemEnhanced: Bool
+    let onToggleEnhancement: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -17,11 +20,11 @@ struct MediaInfoView: View {
                 .foregroundColor(.white)
 
             HStack(alignment: .center) {
-                if let author = item.author, !author.isEmpty {
+                if let author = item.author, !author.isEmpty, let authorNameWithPrefix = item.authorNameWithPrefix {
                     Button {
-                        UIPasteboard.general.string = author
+                        UIPasteboard.general.string = authorNameWithPrefix
                     } label: {
-                        Text("u/\(author)")
+                        Text(authorNameWithPrefix)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -31,7 +34,23 @@ struct MediaInfoView: View {
 
                 Spacer()
 
-                
+                if !item.isVideo {
+                    Button {
+                        onToggleEnhancement?()
+                    } label: {
+                        if isEnhancingCurrentItem {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(.white)
+                        } else {
+                            Image(systemName: isCurrentItemEnhanced ? "sparkles" : "sparkle")
+                        }
+                    }
+                    .font(.title2)
+                    .disabled(isEnhancingCurrentItem || onToggleEnhancement == nil)
+                }
+
+
                 if let onDownloadMedia {
                     Button {
                         onDownloadMedia()

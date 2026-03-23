@@ -3,6 +3,7 @@ import SwiftUI
 struct ZoomableMediaPage: View {
     let item: MediaItem
     let isActive: Bool
+    let enhancedUIImage: UIImage?
     let onZoomStateChange: (Bool) -> Void
 
     @State private var scale: CGFloat = 1
@@ -12,38 +13,46 @@ struct ZoomableMediaPage: View {
 
     var body: some View {
         GeometryReader { geometry in
-            CachedRemoteImage(url: URL(string: item.mediaURL)) { image in
-                image
-                    .resizable()
-                    .scaledToFit()
-                    .scaleEffect(scale)
-                    .offset(offset)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .contentShape(Rectangle())
-                    .gesture(magnificationGesture)
-                    .simultaneousGesture(scale > 1 ? panGesture : nil)
-                    .simultaneousGesture(
-                        TapGesture(count: 2)
-                            .onEnded {
-                                toggleZoom()
-                            }
-                    )
-            } placeholder: {
-                ProgressView()
-                    .tint(.white)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } failure: {
-                ContentUnavailableView("Image Unavailable", systemImage: "photo")
-                    .foregroundColor(.gray)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if let enhancedUIImage {
+                zoomableImage(Image(uiImage: enhancedUIImage), geometry: geometry)
+            } else {
+                CachedRemoteImage(url: URL(string: item.mediaURL)) { image in
+                    zoomableImage(image, geometry: geometry)
+                } placeholder: {
+                    ProgressView()
+                        .tint(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } failure: {
+                    ContentUnavailableView("Image Unavailable", systemImage: "photo")
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .id(item.id)
             }
-            .id(item.id)
         }
         .onChange(of: isActive) { _, newValue in
             if !newValue {
                 resetTransform()
             }
         }
+    }
+
+    private func zoomableImage(_ image: Image, geometry: GeometryProxy) -> some View {
+        image
+            .resizable()
+            .scaledToFit()
+            .scaleEffect(scale)
+            .offset(offset)
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .contentShape(Rectangle())
+            .gesture(magnificationGesture)
+            .simultaneousGesture(scale > 1 ? panGesture : nil)
+            .simultaneousGesture(
+                TapGesture(count: 2)
+                    .onEnded {
+                        toggleZoom()
+                    }
+            )
     }
 
     private var magnificationGesture: some Gesture {

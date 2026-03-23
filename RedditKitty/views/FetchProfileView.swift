@@ -8,13 +8,13 @@ struct FetchProfileView: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 20) {
-                InputSection(input: $input, isUserMode: $isUserMode, postType: $viewModel.postType)
-                ActionButtons(viewModel: viewModel, input: input, isUserMode: isUserMode)
+                InputSection(viewModel: viewModel, input: $input)
                 StatusSection(viewModel: viewModel)
                 Spacer()
             }
             .padding()
             .navigationTitle("Fetch Profile")
+            .navigationBarTitleDisplayMode(.automatic)
         }
     }
 }

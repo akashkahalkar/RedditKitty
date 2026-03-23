@@ -21,6 +21,11 @@ struct PostGridTile: View {
                             .frame(maxWidth: .infinity)
                             .aspectRatio(1, contentMode: .fill)
                             .clipped()
+                            .overlay {
+                                Image(systemName: "play.circle.fill")
+                                    .font(.system(size: 34))
+                                    .foregroundStyle(.white)
+                            }
                     } placeholder: {
                         Rectangle()
                             .fill(.gray.opacity(0.2))
@@ -30,11 +35,6 @@ struct PostGridTile: View {
                             }
                     } failure: {
                         videoPlaceholder
-                    }
-                    .overlay {
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 34))
-                            .foregroundStyle(.white)
                     }
                 } else {
                     videoPlaceholder

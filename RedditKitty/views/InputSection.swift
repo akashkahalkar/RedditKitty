@@ -1,71 +1,105 @@
 import SwiftUI
 import UIKit
 
+enum PostTypeInputFilter: String, Identifiable, CaseIterable {
+
+    case user = "u/"
+    case subreddit = "r/"
+
+    var id: String { rawValue }
+}
+
 struct InputSection: View {
+    @Environment(\.modelContext) private var modelContext
+    @Bindable var viewModel: PostsViewModel
     @Binding var input: String
-    @Binding var isUserMode: Bool
-    @Binding var postType: PostType?
-    @State private var pasteboardString: String?
     @State private var hasCheckedPasteboard = false
+    @State private var inputFiledPostTypeSelection: PostTypeInputFilter = .user
+    @State private var pasteBoardString: String?
+
+    private var postType: PostType {
+        inputFiledPostTypeSelection == .user ? .user(input) : .subreddit(input)
+    }
+
+    private var placeHolder: String {
+        inputFiledPostTypeSelection == .user ? "Reddit username" : "Subreddit name"
+    }
 
     var body: some View {
-        let inputBinding = Binding(
-            get: { input },
-            set: { newValue in
-                input = newValue
-                if let detected = parseRedditURL(newValue) {
-                    withAnimation {
-                        switch detected {
-                        case .user:
-                            isUserMode = true
-                        case .subreddit:
-                            isUserMode = false
-                        }
-                        self.postType = detected
-                    }
-                }
-            }
-        )
 
         VStack(spacing: 12) {
-            HStack {
-                TextField(isUserMode ? "Reddit username" : "Subreddit name", text: inputBinding)
+            HStack(spacing: 0) {
+                Picker(selection: $inputFiledPostTypeSelection) {
+                    ForEach(PostTypeInputFilter.allCases) { filter in
+                        Text(filter.rawValue).tag(filter)
+                    }
+                } label: {
+                    Text(inputFiledPostTypeSelection.rawValue)
+                }.pickerStyle(.menu)
+
+                TextField(placeHolder, text: $input)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder)
-                
-                if let string = pasteboardString, !string.isEmpty {
+
+
+                if !input.isEmpty {
                     Button {
-                        if let postType = parseRedditURL(string) {
+                        input = ""
+                    } label: {
+                        Image(systemName: "xmark.rectangle.portrait")
+                    }.padding(.horizontal)
+                }
+
+                if let pasteBoardString, !pasteBoardString.isEmpty {
+                    Button {
+                        if let postType = parseRedditURL(pasteBoardString) {
                             input = postType.name
-                            self.postType = postType
+                            viewModel.postType = postType
                             withAnimation {
                                 switch postType {
-                                case .user:
-                                    isUserMode = true
-                                case .subreddit:
-                                    isUserMode = false
+                                    case .user:
+                                        inputFiledPostTypeSelection = .user
+                                    case .subreddit:
+                                        inputFiledPostTypeSelection = .subreddit
                                 }
                             }
                         } else {
-                            input = string
+                            input = pasteBoardString
                         }
                     } label: {
-                        Image(systemName: "doc.on.doc.fill").padding()
-                    }
+                        Image(systemName: "doc.on.doc.fill")
+                    }.padding(.trailing)
                 }
             }
 
-            Toggle(isOn: $isUserMode) {
-                Text(isUserMode ? "User" : "Subreddit")
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+            HStack {
+                Button("Fetch") {
+                    Task { await viewModel.fetchPosts(for: viewModel.postType ?? postType, using: modelContext) }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(input.isEmpty)
+
+                Button("Force Refresh") {
+                    Task { await viewModel.fetchPosts(for: viewModel.postType ?? postType, using: modelContext, forceRefresh: true) }
+                }
+                .buttonStyle(.bordered)
+                .disabled(input.isEmpty)
             }
         }
         .onAppear {
-            refreshPasteboardString()
+            updatePasteboard()
         }
-        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
-            refreshPasteboardString()
+        .onReceive(NotificationCenter.default.publisher(
+            for: UIApplication.willEnterForegroundNotification
+        )) { _ in
+            updatePasteboard()
+        }
+    }
+
+    private func updatePasteboard() {
+        if let pasteBoardString = UIPasteboard.general.string {
+            self.pasteBoardString = pasteBoardString
         }
     }
 
@@ -79,11 +113,5 @@ struct InputSection: View {
             return .user(String(userMatch.1))
         }
         return nil
-    }
-
-    private func refreshPasteboardString() {
-        if let raw = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines) {
-            pasteboardString = raw
-        }
     }
 }

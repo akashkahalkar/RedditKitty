@@ -98,6 +98,7 @@ struct ProfileGridView: View {
             }
         }
         .navigationTitle(title)
+        .navigationBarTitleDisplayMode(.inline)
         .task {
             if viewModel.posts.isEmpty {
                 await viewModel.fetchPosts(for: inferredPostType, using: modelContext)

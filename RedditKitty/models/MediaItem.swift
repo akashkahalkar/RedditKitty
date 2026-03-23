@@ -19,6 +19,11 @@ struct MediaItem: Identifiable, Hashable, Sendable {
         kind == .video
     }
 
+    var authorNameWithPrefix: String? {
+        guard let author else { return nil }
+        return "u/\(author)"
+    }
+
     var id: String {
         "\(postId)|\(imageIndexInPost)|\(mediaURL)|\(kind.rawValue)"
     }

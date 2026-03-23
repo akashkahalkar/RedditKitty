@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct MediaViewerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -12,6 +13,9 @@ struct MediaViewerView: View {
     @State private var shouldPlayActiveVideo = true
     @State private var isDownloadingMedia = false
     @State private var mediaDownloadError: String?
+    @State private var enhancementError: String?
+    @State private var enhancedImagesByID: [String: UIImage] = [:]
+    @State private var enhancingIDs: Set<String> = []
     @State private var shareURL: ShareURLWrapper?
     @AppStorage(AppSettings.autoPlayVideoKey) private var autoPlayVideo = true
 
@@ -37,6 +41,11 @@ struct MediaViewerView: View {
         } message: {
             Text(mediaDownloadError ?? "Unable to download media.")
         }
+        .alert("Enhancement Failed", isPresented: isEnhancementErrorPresented) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(enhancementError ?? "Unable to enhance image.")
+        }
     }
 
     private var baseContent: some View {
@@ -54,17 +63,22 @@ struct MediaViewerView: View {
 
     private var viewerStack: some View {
         ZStack {
-            HStack {
+            mediaPager
+            HStack() {
                 Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.white.opacity(0.7))
+                VStack(alignment: .trailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    .safeAreaPadding(.top, 70)
+                    .safeAreaPadding(.trailing, 10)
+                    Spacer()
                 }
             }
-            mediaPager
             if isUIVisible {
                 VStack {
                     Spacer()
@@ -83,7 +97,10 @@ struct MediaViewerView: View {
             currentIndex: currentIndex,
             totalCount: items.count,
             isDownloadingMedia: isDownloadingMedia,
-            onDownloadMedia: onDownloadMediaAction
+            onDownloadMedia: onDownloadMediaAction,
+            isEnhancingCurrentItem: enhancingIDs.contains(currentItem.id),
+            isCurrentItemEnhanced: enhancedImagesByID[currentItem.id] != nil,
+            onToggleEnhancement: currentItem.isVideo ? nil : { toggleEnhancementForCurrentItem() }
         )
         .padding(.horizontal)
         .padding(.bottom, 12)
@@ -99,7 +116,8 @@ struct MediaViewerView: View {
                     MediaPageView(
                         item: item,
                         isActive: index == currentIndex,
-                        shouldPlay: shouldPlayActiveVideo
+                        shouldPlay: shouldPlayActiveVideo,
+                        enhancedUIImage: enhancedImagesByID[item.id]
                     ) { isZoomed in
                         if index == currentIndex {
                             isCurrentItemZoomed = isZoomed
@@ -139,6 +157,13 @@ struct MediaViewerView: View {
         Binding(
             get: { mediaDownloadError != nil },
             set: { if !$0 { mediaDownloadError = nil } }
+        )
+    }
+
+    private var isEnhancementErrorPresented: Binding<Bool> {
+        Binding(
+            get: { enhancementError != nil },
+            set: { if !$0 { enhancementError = nil } }
         )
     }
 
@@ -210,6 +235,53 @@ struct MediaViewerView: View {
         shouldPlayActiveVideo = shouldPlay
     }
 
+    private func toggleEnhancementForCurrentItem() {
+        let itemID = currentItem.id
+        guard !currentItem.isVideo, !enhancingIDs.contains(itemID) else {
+            return
+        }
+
+        if enhancedImagesByID[itemID] != nil {
+            enhancedImagesByID[itemID] = nil
+            return
+        }
+
+        guard let url = URL(string: currentItem.mediaURL) else {
+            enhancementError = "Invalid image URL."
+            return
+        }
+
+        enhancingIDs.insert(itemID)
+        enhancementError = nil
+
+        Task {
+            defer {
+                Task { @MainActor in
+                    enhancingIDs.remove(itemID)
+                }
+            }
+
+            do {
+                let sourceImage = try await ImageCacheRepository.shared.image(for: url)
+                let enhancedImage = try await Task.detached(priority: .userInitiated) { () -> UIImage in
+                    let enhancer = await ImageEnhancer.shared
+                    guard let output = await enhancer.enhance(sourceImage) else {
+                        throw EnhancementProcessingError.failed
+                    }
+                    return output
+                }.value
+
+                await MainActor.run {
+                    enhancedImagesByID[itemID] = enhancedImage
+                }
+            } catch {
+                await MainActor.run {
+                    enhancementError = error.localizedDescription
+                }
+            }
+        }
+    }
+
     private func downloadCurrentMedia() {
         guard !isDownloadingMedia, let url = resolvedDownloadURL else {
             return
@@ -265,4 +337,12 @@ struct MediaViewerView: View {
 private struct ShareURLWrapper: Identifiable {
     let id = UUID()
     let url: URL
+}
+
+private enum EnhancementProcessingError: LocalizedError {
+    case failed
+
+    var errorDescription: String? {
+        "Image enhancement failed."
+    }
 }
