@@ -2,7 +2,6 @@ import UIKit
 import CoreImage
 import CoreImage.CIFilterBuiltins
 
-@globalActor
 actor ImageEnhancer {
 
     private let context: CIContext
