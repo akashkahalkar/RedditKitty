@@ -5,13 +5,16 @@
 <table>
 <tr>
 <td>
-<img src = "./screenshots/Home.PNG" width = "200" />            
+<img src = "./screenshots/home.PNG" width = "200" />            
 </td>
 <td>
-<img src = "./screenshots/FeedView.PNG" width = "200" />
+<img src = "./screenshots/feed.PNG" width = "200" />
 </td>
 <td>
-<img src = "./screenshots/Settings.PNG" width = "200" /> 
+<img src = "./screenshots/profiles.PNG" width = "200" /> 
+</td>
+<td>
+<img src = "./screenshots/settings.PNG" width = "200" /> 
 </td>
 </tr>
 </table>
