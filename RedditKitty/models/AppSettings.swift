@@ -25,28 +25,28 @@ enum AppSettings {
     }
 
     enum ImageEnhancerSettings {
-        nonisolated(unsafe) static let brightnessKey = "enhancer.brightness"
-        nonisolated(unsafe) static let contrastKey = "enhancer.contrast"
-        nonisolated(unsafe) static let saturationKey = "enhancer.saturation"
-        nonisolated(unsafe) static let noiseLevelKey = "enhancer.noise_level"
-        nonisolated(unsafe) static let noiseSharpnessKey = "enhancer.noise_sharpness"
-        nonisolated(unsafe) static let unsharpRadiusKey = "enhancer.unsharp_radius"
-        nonisolated(unsafe) static let unsharpIntensityKey = "enhancer.unsharp_intensity"
+        static let brightnessKey = "enhancer.brightness"
+        static let contrastKey = "enhancer.contrast"
+        static let saturationKey = "enhancer.saturation"
+        static let noiseLevelKey = "enhancer.noise_level"
+        static let noiseSharpnessKey = "enhancer.noise_sharpness"
+        static let unsharpRadiusKey = "enhancer.unsharp_radius"
+        static let unsharpIntensityKey = "enhancer.unsharp_intensity"
 
-        nonisolated(unsafe) static let brightnessRange: ClosedRange<Double> = -0.2...0.2
-        nonisolated(unsafe) static let contrastRange: ClosedRange<Double> = 0.8...1.4
-        nonisolated(unsafe) static let saturationRange: ClosedRange<Double> = 0.8...1.4
-        nonisolated(unsafe) static let noiseLevelRange: ClosedRange<Double> = 0...0.1
-        nonisolated(unsafe) static let noiseSharpnessRange: ClosedRange<Double> = 0...2
-        nonisolated(unsafe) static let unsharpRadiusRange: ClosedRange<Double> = 0...5
-        nonisolated(unsafe) static let unsharpIntensityRange: ClosedRange<Double> = 0...2
+        static let brightnessRange: ClosedRange<Double> = -0.2...0.2
+        static let contrastRange: ClosedRange<Double> = 0.8...1.4
+        static let saturationRange: ClosedRange<Double> = 0.8...1.4
+        static let noiseLevelRange: ClosedRange<Double> = 0...0.1
+        static let noiseSharpnessRange: ClosedRange<Double> = 0...2
+        static let unsharpRadiusRange: ClosedRange<Double> = 0...5
+        static let unsharpIntensityRange: ClosedRange<Double> = 0...2
 
-        nonisolated(unsafe) static let brightnessDefault = 0.02
-        nonisolated(unsafe) static let contrastDefault = 1.02
-        nonisolated(unsafe) static let saturationDefault = 1.05
-        nonisolated(unsafe) static let noiseLevelDefault = 0.02
-        nonisolated(unsafe) static let noiseSharpnessDefault = 0.4
-        nonisolated(unsafe) static let unsharpRadiusDefault = 2.5
-        nonisolated(unsafe) static let unsharpIntensityDefault = 0.8
+        static let brightnessDefault = 0.02
+        static let contrastDefault = 1.02
+        static let saturationDefault = 1.05
+        static let noiseLevelDefault = 0.02
+        static let noiseSharpnessDefault = 0.4
+        static let unsharpRadiusDefault = 2.5
+        static let unsharpIntensityDefault = 0.8
     }
 }
