@@ -4,6 +4,8 @@
 //
 //  Created by Akash on 27/03/26.
 //
+import SwiftUI
+
 struct TabData: Identifiable, Equatable {
     let id: UUID = UUID()
     let title: String
