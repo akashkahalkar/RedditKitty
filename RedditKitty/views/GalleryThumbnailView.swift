@@ -2,26 +2,26 @@ import SwiftUI
 
 struct GalleryThumbnailView: View {
     let imageURL: String
+    private let aspectRatio = 0.75
 
     var body: some View {
         CachedRemoteImage(url: URL(string: imageURL)) { image in
             image
                 .resizable()
-                .scaledToFill()
                 .frame(maxWidth: .infinity)
-                .aspectRatio(1, contentMode: .fit)
+                .aspectRatio(aspectRatio, contentMode: .fill)
                 .clipped()
         } placeholder: {
             Rectangle()
                 .fill(.gray.opacity(0.2))
-                .aspectRatio(1, contentMode: .fit)
+                .aspectRatio(aspectRatio, contentMode: .fill)
                 .overlay {
                     ProgressView()
                 }
         } failure: {
             Rectangle()
                 .fill(.red.opacity(0.15))
-                .aspectRatio(1, contentMode: .fit)
+                .aspectRatio(aspectRatio, contentMode: .fill)
         }
     }
 }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct PostGridTile: View {
     let post: Post
+    private let aspectRatio = 0.75
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -17,9 +18,8 @@ struct PostGridTile: View {
                     CachedRemoteImage(url: URL(string: thumbnailURL)) { image in
                         image
                             .resizable()
-                            .scaledToFit()
                             .frame(maxWidth: .infinity)
-                            .aspectRatio(1, contentMode: .fill)
+                            .aspectRatio(aspectRatio, contentMode: .fill)
                             .clipped()
                             .overlay {
                                 Image(systemName: "play.circle.fill")
@@ -29,7 +29,7 @@ struct PostGridTile: View {
                     } placeholder: {
                         Rectangle()
                             .fill(.gray.opacity(0.2))
-                            .aspectRatio(1, contentMode: .fit)
+                            .aspectRatio(aspectRatio, contentMode: .fill)
                             .overlay(alignment: .center) {
                                 ProgressView()
                             }
@@ -43,21 +43,20 @@ struct PostGridTile: View {
                 CachedRemoteImage(url: URL(string: (post.imageURLs ?? []).first ?? "")) { image in
                     image
                         .resizable()
-                        .scaledToFit()
                         .frame(maxWidth: .infinity)
-                        .aspectRatio(1, contentMode: .fill)
+                        .aspectRatio(aspectRatio, contentMode: .fill)
                         .clipped()
                 } placeholder: {
                     Rectangle()
                         .fill(.gray.opacity(0.2))
-                        .aspectRatio(1, contentMode: .fit)
+                        .aspectRatio(aspectRatio, contentMode: .fill)
                         .overlay(alignment: .center) {
                             ProgressView()
                         }
                 } failure: {
                     Rectangle()
                         .fill(.red)
-                        .aspectRatio(1, contentMode: .fit)
+                        .aspectRatio(aspectRatio, contentMode: .fill)
                 }
             }
 
@@ -77,7 +76,7 @@ struct PostGridTile: View {
     private var videoPlaceholder: some View {
         Rectangle()
             .fill(.black.opacity(0.8))
-            .aspectRatio(1, contentMode: .fit)
+            .aspectRatio(aspectRatio, contentMode: .fill)
             .overlay {
                 VStack(spacing: 8) {
                     Image(systemName: "play.circle.fill")
