@@ -161,7 +161,7 @@ import SwiftData
 
             if postHint == "rich:video" || postHint == "hosted:video" {
                 let videoURLs = extractVideoURL(childData: childData)
-                let thumbnails = extractVideoThumbnailURL(childData: childData)
+                let thumbnails = extractSinglePostThumbnailURL(childData: childData)
                 return Post(
                     postId: id,
                     title: title,
@@ -173,12 +173,11 @@ import SwiftData
                     thumbs: thumbnails
                 )
             } else {
-                var imageURLs = extractImageURLs(from: childData, isGallery: isGallery)
+                let imageURLs = extractImageURLs(from: childData, isGallery: isGallery)
+                let thumbNails = extractThumbnails(from: childData, isGallery: isGallery)
                 guard !title.isEmpty, !imageURLs.isEmpty, seenIDs.insert(id).inserted else {
                     return nil
                 }
-
-                let thumbs = imageURLs.count > 1 ? Array(arrayLiteral: imageURLs.removeFirst()) : imageURLs
 
                 return Post(
                     postId: id,
@@ -188,7 +187,7 @@ import SwiftData
                     imageURLs: imageURLs,
                     videoURLs: nil,
                     author: author,
-                    thumbs: thumbs
+                    thumbs: thumbNails
                 )
             }
         }
@@ -327,6 +326,12 @@ import SwiftData
         : extractSinglePostURL(childData: childData)
     }
 
+    private func extractThumbnails(from childData: [String: Any], isGallery: Bool) -> [String]  {
+        return isGallery
+        ? extractThumbnails(childData: childData)
+        : extractSinglePostThumbnailURL(childData: childData)
+    }
+
     private func cleanURL(_ rawURL: String) -> String {
         rawURL
             .replacingOccurrences(of: "&amp;", with: "&")
@@ -354,17 +359,16 @@ import SwiftData
         return urls
     }
 
-    private func extractVideoThumbnailURL(childData: [String: Any]) -> [String] {
+    private func extractSinglePostThumbnailURL(childData: [String: Any]) -> [String] {
         let preview = childData["preview"] as? [String: Any]
         let images = preview?["images"] as? [[String: Any]]
-        let resolutions = images?.first?["resolutions"] as? [[String: Any]]
-        let rawPreviewURL = resolutions?.first?["url"] as? String
+        let thumbs = images?.first?["resolutions"] as? [[String: Any]]
+        let thumbURL = thumbs?.first?["url"] as? String
 
-        if let rawPreviewURL {
-            let cleanedURL = cleanURL(rawPreviewURL)
-            return cleanedURL.isEmpty ? [] : [cleanedURL]
+        guard let thumbURL else {
+            return []
         }
-        return []
+        return [cleanURL(thumbURL)]
     }
 
     private func extractVideoURL(childData: [String: Any]) -> [String] {
@@ -389,23 +393,32 @@ import SwiftData
     private func extractGallaryImages(childData: [String: Any]) -> [String] {
         let mediaMetadata = childData["media_metadata"] as? [String: Any] ?? [:]
 
-        return mediaMetadata.values.flatMap { item -> [String] in
+        return mediaMetadata.values.compactMap { item -> String? in
             guard let metadata = item as? [String: Any],
                   let mediaType = metadata["e"] as? String,
                   mediaType == "Image",
                   let source = metadata["s"] as? [String: Any],
                   let rawURL = source["u"] as? String else {
-                return []
+                return nil
             }
-            let thumbs = metadata["p"] as? [[String: Any]]
-            let thumbUrl = thumbs?.first?["u"] as? String
-
-            var urls = [String]()
-            if let thumbUrl {
-                urls.append(cleanURL(thumbUrl))
-            }
-            urls.append(cleanURL(rawURL))
-            return urls
+            return cleanURL(rawURL)
         }
+    }
+
+    private func extractThumbnails(childData: [String: Any]) -> [String] {
+        let mediaMetadata = childData["media_metadata"] as? [String: Any] ?? [:]
+        let thumbs = mediaMetadata.values.compactMap { item -> String? in
+            guard let metadata = item as? [String: Any],
+                  let mediaType = metadata["e"] as? String,
+                  mediaType == "Image",
+                  let thumbs = metadata["p"] as? [[String: Any]],
+                  let thumbUrl = thumbs.first?["u"] as? String else {
+                return nil
+            }
+            return cleanURL(thumbUrl)
+        }
+
+        print("---> thumbs count ", thumbs.count)
+        return thumbs
     }
 }

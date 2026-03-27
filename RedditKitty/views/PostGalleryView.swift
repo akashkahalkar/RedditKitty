@@ -8,6 +8,7 @@ struct PostGalleryView: View {
 
     private let columns = [
         GridItem(.flexible(), spacing: 1),
+        GridItem(.flexible(), spacing: 1),
         GridItem(.flexible(), spacing: 1)
     ]
 
@@ -19,11 +20,14 @@ struct PostGalleryView: View {
                     .padding(.horizontal, 8)
 
                 LazyVGrid(columns: columns, spacing: 8) {
-                    ForEach(Array((post.thumbs ?? []).enumerated()), id: \.offset) { index, imageURL in
+                    let thumbnails = post.thumbs ?? []
+                    let _ = print("--> received thubs counts", thumbnails.count)
+                    ForEach(thumbnails.indices, id: \.self) { index in
                         if let selectedIndex = MediaSequenceBuilder.index(for: post, imageIndex: index, in: mediaItems) {
                             Button {
                                 selectedMediaIndex = selectedIndex
                             } label: {
+                                let imageURL = thumbnails[index]
                                 GalleryThumbnailView(imageURL: imageURL)
                             }
                             .buttonStyle(.plain)
