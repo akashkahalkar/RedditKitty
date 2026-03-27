@@ -2,62 +2,78 @@ import Foundation
 import UIKit
 import CryptoKit
 
+// MARK: - DiskCache Actor
+
+private actor DiskCache {
+    func read(from url: URL) -> UIImage? {
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return UIImage(data: data)
+    }
+
+    func write(_ data: Data, to url: URL) {
+        try? data.write(to: url, options: .atomic)
+    }
+}
+
+// MARK: - ImageCacheRepository Actor
+
 actor ImageCacheRepository {
     static let shared = ImageCacheRepository()
 
     private let memoryCache: NSCache<NSString, UIImage> = {
         let cache = NSCache<NSString, UIImage>()
         cache.countLimit = 150
-        cache.totalCostLimit = 150 * 1024 * 1024 // ~150MB roughly
+        cache.totalCostLimit = 150 * 1024 * 1024
         return cache
     }()
-    
-    private let fileManager = FileManager.default
+
+    private let diskCache = DiskCache()
     private let cacheDirectory: URL
-    
+    private let fileManager = FileManager.default
+
     private var activeDownloadsCount = 0
     private let maxConcurrentDownloads = 6
     private var downloadWaiters: [CheckedContinuation<Void, Never>] = []
 
     private init() {
-        let cachesDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
-            ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-        cacheDirectory = cachesDirectory.appendingPathComponent("RedditKittyImageCache", isDirectory: true)
+        let cachesDirectory = FileManager.default.urls(
+            for: .cachesDirectory,
+            in: .userDomainMask
+        ).first ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
 
-        if !fileManager.fileExists(atPath: cacheDirectory.path) {
-            try? fileManager.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+        cacheDirectory = cachesDirectory.appendingPathComponent(
+            "RedditKittyImageCache",
+            isDirectory: true
+        )
+
+        if !FileManager.default.fileExists(atPath: cacheDirectory.path) {
+            try? FileManager.default.createDirectory(
+                at: cacheDirectory,
+                withIntermediateDirectories: true
+            )
         }
     }
+
+    // MARK: - Public
 
     func image(for url: URL) async throws -> UIImage {
         let cacheKey = url.absoluteString as NSString
 
-        if let cachedImage = memoryCache.object(forKey: cacheKey) {
-            return cachedImage
+        // 1. Memory cache — fast path
+        if let cached = memoryCache.object(forKey: cacheKey) {
+            return cached
         }
 
+        // 2. Disk cache — off actor via DiskCache actor
         let fileURL = cachedFileURL(for: url)
-        if let diskImage = imageFromDisk(at: fileURL) {
+        if let diskImage = await diskCache.read(from: fileURL) {
             memoryCache.setObject(diskImage, forKey: cacheKey)
             return diskImage
         }
 
-        // Concurrency limiting for network downloads
-        if activeDownloadsCount >= maxConcurrentDownloads {
-            await withCheckedContinuation { continuation in
-                downloadWaiters.append(continuation)
-            }
-        }
-        
-        activeDownloadsCount += 1
-        
-        defer {
-            activeDownloadsCount -= 1
-            if !downloadWaiters.isEmpty {
-                let next = downloadWaiters.removeFirst()
-                next.resume()
-            }
-        }
+        // 3. Network download — throttled
+        await throttle()
+        defer { releaseSlot() }
 
         let (data, _) = try await URLSession.shared.data(from: url)
 
@@ -67,24 +83,41 @@ actor ImageCacheRepository {
 
         let cost = Int(image.size.width * image.size.height * 4)
         memoryCache.setObject(image, forKey: cacheKey, cost: cost)
-        try? data.write(to: fileURL, options: .atomic)
+        await diskCache.write(data, to: fileURL)
+
         return image
     }
 
-    private func imageFromDisk(at url: URL) -> UIImage? {
-        guard let data = try? Data(contentsOf: url),
-              let image = UIImage(data: data) else {
-            return nil
+    // MARK: - Throttling
+
+    /// Waits until a download slot is available, then atomically claims it.
+    private func throttle() async {
+        if activeDownloadsCount < maxConcurrentDownloads {
+            activeDownloadsCount += 1
+            return
         }
-
-        return image
+        // Slot is claimed by releaseSlot() on this waiter's behalf upon resume
+        await withCheckedContinuation { continuation in
+            downloadWaiters.append(continuation)
+        }
     }
+
+    /// Frees a slot or hands it directly to the next waiter.
+    private func releaseSlot() {
+        if let next = downloadWaiters.first {
+            downloadWaiters.removeFirst()
+            next.resume() // hands our slot over — count stays the same
+        } else {
+            activeDownloadsCount -= 1
+        }
+    }
+
+    // MARK: - Helpers
 
     private func cachedFileURL(for url: URL) -> URL {
         let filename = SHA256.hash(data: Data(url.absoluteString.utf8))
             .compactMap { String(format: "%02x", $0) }
             .joined()
-
         return cacheDirectory.appendingPathComponent(filename)
     }
 }
