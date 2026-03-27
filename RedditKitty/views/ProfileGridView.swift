@@ -8,12 +8,20 @@
 import SwiftUI
 import SwiftData
 
-private enum MediaFilter: String, CaseIterable, Identifiable {
+enum MediaFilter: String, CaseIterable, Identifiable {
     case all = "All"
     case images = "Images"
     case videos = "Videos"
 
     var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+            case .all: "square.grid.2x2"
+            case .images: "photo"
+            case .videos: "video"
+        }
+    }
 }
 
 struct ProfileGridView: View {
@@ -25,9 +33,9 @@ struct ProfileGridView: View {
     @State private var selectedFilter: MediaFilter = .all
 
     private let columns = [
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8)
+        GridItem(.flexible(), spacing: 1),
+        GridItem(.flexible(), spacing: 1),
+        GridItem(.flexible(), spacing: 1)
     ]
 
     init(sourceKey: String, title: String) {
@@ -55,45 +63,40 @@ struct ProfileGridView: View {
     }
 
     var body: some View {
-        VStack {
-            if !viewModel.posts.isEmpty {
-                Picker("Media Filter", selection: $selectedFilter) {
-                    ForEach(MediaFilter.allCases) { filter in
-                        Text(filter.rawValue).tag(filter)
+        let tabData = MediaFilter.allCases.map { TabData.init(title: $0.rawValue, icon: $0.icon) }
+        
+        FloatingTabBar(
+            tabData: tabData,
+            selectedIndex: Binding(
+            get: { MediaFilter.allCases.firstIndex(of: selectedFilter) ?? 0 },
+            set: { selectedFilter = MediaFilter.allCases[$0] }
+        )) {
+            if viewModel.isLoading && viewModel.posts.isEmpty {
+                ProgressView("Loading...")
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 80)
+            } else if let errorMessage = viewModel.errorMessage, viewModel.posts.isEmpty {
+                ContentUnavailableView("Failed To Load", systemImage: "exclamationmark.triangle", description: Text(errorMessage))
+                    .padding(.top, 80)
+            } else if filteredPosts.isEmpty && !viewModel.isLoading {
+                ContentUnavailableView(
+                    selectedFilter == .videos ? "No Videos" : (selectedFilter == .images ? "No Images" : "No Media"),
+                    systemImage: selectedFilter == .videos ? "video.slash" : "photo.on.rectangle"
+                ).padding(.top, 80)
+            } else {
+                LazyVGrid(columns: columns, spacing: 1) {
+                    ForEach(filteredPosts) { post in
+                        gridTile(for: post)
+                            .onAppear {
+                                if post.id == filteredPosts.last?.id {
+                                    loadMore()
+                                }
+                            }
                     }
                 }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 8)
-                .padding(.top, 8)
-            }
-            ScrollView {
-                if viewModel.isLoading && viewModel.posts.isEmpty {
-                    ProgressView("Loading...")
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 80)
-                } else if let errorMessage = viewModel.errorMessage, viewModel.posts.isEmpty {
-                    ContentUnavailableView("Failed To Load", systemImage: "exclamationmark.triangle", description: Text(errorMessage))
-                        .padding(.top, 80)
-                } else if filteredPosts.isEmpty && !viewModel.isLoading {
-                    ContentUnavailableView(
-                        selectedFilter == .videos ? "No Videos" : (selectedFilter == .images ? "No Images" : "No Media"),
-                        systemImage: selectedFilter == .videos ? "video.slash" : "photo.on.rectangle"
-                    ).padding(.top, 80)
-                } else {
-                    LazyVGrid(columns: columns, spacing: 8) {
-                        ForEach(filteredPosts) { post in
-                            gridTile(for: post)
-                                .onAppear {
-                                    if post.id == filteredPosts.last?.id {
-                                        loadMore()
-                                    }
-                                }
-                        }
-                    }.padding(8)
 
-                    if viewModel.isLoading && !viewModel.posts.isEmpty {
-                        ProgressView().padding()
-                    }
+                if viewModel.isLoading && !viewModel.posts.isEmpty {
+                    ProgressView().padding()
                 }
             }
         }
@@ -103,7 +106,6 @@ struct ProfileGridView: View {
             if viewModel.posts.isEmpty {
                 await viewModel.fetchPosts(for: inferredPostType, using: modelContext)
             } else {
-                // If posts were preserved but maps were cleared or need refresh
                 viewModel.updateMediaItems()
             }
         }
@@ -111,7 +113,11 @@ struct ProfileGridView: View {
             get: { selectedViewerPayload },
             set: { selectedViewerPayload = $0 }
         )) { payload in
-            MediaViewerView(items: payload.items, initialIndex: payload.initialIndex)
+            MediaViewerView(items: payload.items, initialIndex: payload.initialIndex, filter: selectedFilter) { postType in
+                Task {
+                    await viewModel.fetchPosts(for: postType, using: modelContext)
+                }
+            }
         }
     }
 
@@ -119,7 +125,7 @@ struct ProfileGridView: View {
     private func gridTile(for post: Post) -> some View {
         if !post.isVideo, (post.imageURLs?.count ?? 0) > 1 {
             NavigationLink {
-                PostGalleryView(post: post, mediaItems: viewModel.mediaItems)
+                PostGalleryView(post: post, mediaItems: viewModel.mediaItems, filter: selectedFilter)
             } label: {
                 PostGridTile(post: post)
             }

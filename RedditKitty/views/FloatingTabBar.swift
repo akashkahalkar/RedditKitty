@@ -69,7 +69,7 @@ struct FloatingTabBar<Content: View>: View {
             VStack(spacing: 0) {
                 heroView()
                 tabbar(showFloating: showFloating)
-                content
+                content.padding(.top, 1)
             }
         }
         .onScrollGeometryChange(for: Bool.self) { geometry in
@@ -101,20 +101,32 @@ struct FloatingTabBar<Content: View>: View {
             HStack(spacing: 5) {
                 ForEach(tabData.indices, id: \.self) { index in
                     let tab = tabData[index]
-                    RoundedRectangle(cornerRadius: 5)
-                        .fill(selectedIndex == index ? .white : .green)
-                        .overlay(content: {
-                            Image(systemName: tab.icon)
-                                .foregroundColor(selectedIndex == index ? .green : .white)
-                        })
-                        .matchedGeometryEffect(id: tab.id, in: namespace)
-                        .onTapGesture {
-                            updateIndex(index)
+                    VStack(spacing: 0) {
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(.black)
+                            .overlay(content: {
+                                Image(systemName: tab.icon)
+                                    .foregroundColor(selectedIndex == index ? .white : .gray)
+                                    .imageScale(.large)
+                                    .aspectRatio(contentMode: .fit)
+                            })
+                            .matchedGeometryEffect(id: tab.id, in: namespace)
+                            .onTapGesture {
+                                updateIndex(index)
+                            }
+                        if index == selectedIndex {
+                            Capsule()
+                                .frame(width: 40, height: 2.0)
+                                .matchedGeometryEffect(id: "underline", in: namespace)
+                        } else {
+                            Spacer().frame(height: 2.0)
                         }
+                    }
+
                 }
             }
             .padding(.horizontal)
-            .frame(height: 40)
+            .frame(height: 60)
         } else {
             Spacer().frame(height: 60)
         }
