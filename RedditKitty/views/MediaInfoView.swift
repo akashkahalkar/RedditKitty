@@ -9,6 +9,7 @@ struct MediaInfoView: View {
     let isEnhancingCurrentItem: Bool
     let isCurrentItemEnhanced: Bool
     let onToggleEnhancement: (() -> Void)?
+    let downloadProfile: ((PostType) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -17,7 +18,6 @@ struct MediaInfoView: View {
             Text(item.postTitle)
                 .font(.headline)
                 .lineLimit(2)
-                .foregroundColor(.white)
 
             HStack(alignment: .center) {
                 if let author = item.author, !author.isEmpty, let authorNameWithPrefix = item.authorNameWithPrefix {
@@ -26,10 +26,19 @@ struct MediaInfoView: View {
                     } label: {
                         Text(authorNameWithPrefix)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.primary)
                     }
                     .buttonStyle(.bordered)
-                    .padding(.bottom)
+                }
+
+                if let downloadProfile {
+                    Button {
+                        if let author = item.author, !author.isEmpty {
+                            downloadProfile(PostType.user(author))
+                        }
+                    } label: {
+                        Image(systemName: "icloud.and.arrow.down")
+                    }
                 }
 
                 Spacer()
@@ -41,7 +50,7 @@ struct MediaInfoView: View {
                         if isEnhancingCurrentItem {
                             ProgressView()
                                 .controlSize(.small)
-                                .tint(.white)
+                                .tint(.primary)
                         } else {
                             Image(systemName: isCurrentItemEnhanced ? "sparkles" : "sparkle")
                         }
@@ -57,7 +66,7 @@ struct MediaInfoView: View {
                     } label: {
                         Image(systemName: isDownloadingMedia ? "arrow.down.circle.fill" : "arrow.down.circle")
                             .font(.title2)
-                            .foregroundColor(.white.opacity(0.9))
+                            .foregroundStyle(.primary)
                     }
                     .disabled(isDownloadingMedia)
                 }
@@ -73,10 +82,12 @@ struct MediaInfoView: View {
                     } label: {
                         Image(systemName: "photo.on.rectangle")
                             .font(.title2)
-                            .foregroundColor(.white.opacity(0.9))
+                            .foregroundStyle(.primary)
                     }
                 }
             }
-        }.frame(maxWidth: .infinity)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical)
     }
 }
