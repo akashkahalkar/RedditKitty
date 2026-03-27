@@ -21,7 +21,6 @@ struct PostGalleryView: View {
 
                 LazyVGrid(columns: columns, spacing: 8) {
                     let thumbnails = post.thumbs ?? []
-                    let _ = print("--> received thubs counts", thumbnails.count)
                     ForEach(thumbnails.indices, id: \.self) { index in
                         if let selectedIndex = MediaSequenceBuilder.index(for: post, imageIndex: index, in: mediaItems) {
                             Button {

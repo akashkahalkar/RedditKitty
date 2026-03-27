@@ -417,8 +417,6 @@ import SwiftData
             }
             return cleanURL(thumbUrl)
         }
-
-        print("---> thumbs count ", thumbs.count)
         return thumbs
     }
 }
