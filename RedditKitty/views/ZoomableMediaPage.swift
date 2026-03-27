@@ -14,7 +14,7 @@ struct ZoomableMediaPage: View {
     var body: some View {
         GeometryReader { geometry in
             if let enhancedUIImage {
-                zoomableImage(Image(uiImage: enhancedUIImage), geometry: geometry)
+                zoomableImage(enhancedUIImage, geometry: geometry)
             } else {
                 CachedRemoteImage(url: URL(string: item.mediaURL)) { image in
                     zoomableImage(image, geometry: geometry)
@@ -37,8 +37,9 @@ struct ZoomableMediaPage: View {
         }
     }
 
-    private func zoomableImage(_ image: Image, geometry: GeometryProxy) -> some View {
-        image
+    private func zoomableImage(_ uiImage: UIImage, geometry: GeometryProxy) -> some View {
+        let image = Image(uiImage: uiImage)
+        return image
             .resizable()
             .scaledToFit()
             .scaleEffect(scale)
@@ -52,8 +53,7 @@ struct ZoomableMediaPage: View {
                     .onEnded {
                         toggleZoom()
                     }
-            )
-    }
+            )    }
 
     private var magnificationGesture: some Gesture {
         MagnificationGesture()

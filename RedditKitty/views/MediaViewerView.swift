@@ -4,7 +4,7 @@ import UIKit
 struct MediaViewerView: View {
     @Environment(\.dismiss) private var dismiss
 
-    let items: [MediaItem]
+    private let filteredItems: [MediaItem]
     @State private var currentIndex: Int
     @State private var dragOffset: CGSize = .zero
     @State private var isCurrentItemZoomed = false
@@ -17,12 +17,25 @@ struct MediaViewerView: View {
     @State private var enhancedImagesByID: [String: UIImage] = [:]
     @State private var enhancingIDs: Set<String> = []
     @State private var shareURL: ShareURLWrapper?
-    @AppStorage(AppSettings.autoPlayVideoKey) private var autoPlayVideo = true
+    @AppStorage(AppSettings.autoPlayVideoKey) private var autoPlayVideo = false
+    var fetchUser: ((PostType) -> Void)?
 
-    init(items: [MediaItem], initialIndex: Int) {
-        self.items = items
-        _currentIndex = State(initialValue: initialIndex)
-        _shouldPlayActiveVideo = State(initialValue: autoPlayVideo)
+    init(items: [MediaItem], initialIndex: Int, filter: MediaFilter, downloadProfileAction: ((PostType) -> Void)?) {
+
+        let filtered: [MediaItem]
+        switch filter {
+            case .all: filtered = items
+            case .images: filtered = items.filter { !$0.isVideo }
+            case .videos: filtered = items.filter { $0.isVideo }
+        }
+        self.filteredItems = filtered
+        
+        let initialItem = items[initialIndex]
+        let mappedIndex = filtered.firstIndex(where: { $0.id == initialItem.id }) ?? 0
+
+        fetchUser = downloadProfileAction
+
+        _currentIndex = State(initialValue: mappedIndex)
     }
 
     var body: some View {
@@ -50,7 +63,7 @@ struct MediaViewerView: View {
 
     private var baseContent: some View {
         ZStack {
-            backgroundView
+            // backgroundView
             viewerStack
         }
     }
@@ -81,6 +94,7 @@ struct MediaViewerView: View {
             }
             if isUIVisible {
                 VStack {
+
                     Spacer()
                     infoSection
                 }
@@ -95,24 +109,25 @@ struct MediaViewerView: View {
         MediaInfoView(
             item: currentItem,
             currentIndex: currentIndex,
-            totalCount: items.count,
+            totalCount: filteredItems.count,
             isDownloadingMedia: isDownloadingMedia,
             onDownloadMedia: onDownloadMediaAction,
             isEnhancingCurrentItem: enhancingIDs.contains(currentItem.id),
             isCurrentItemEnhanced: enhancedImagesByID[currentItem.id] != nil,
-            onToggleEnhancement: currentItem.isVideo ? nil : { toggleEnhancementForCurrentItem() }
+            onToggleEnhancement: currentItem.isVideo ? nil : { toggleEnhancementForCurrentItem() },
+            downloadProfile: fetchUser
         )
+        .foregroundStyle(.primary)
         .padding(.horizontal)
         .padding(.bottom, 12)
-        .background(Color.black.opacity(0.4))
         .zIndex(1)
     }
 
     private var mediaPager: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 0) {
-                ForEach(0..<items.count, id: \.self) { index in
-                    let item = items[index]
+                ForEach(0..<filteredItems.count, id: \.self) { index in
+                    let item = filteredItems[index]
                     MediaPageView(
                         item: item,
                         isActive: index == currentIndex,
@@ -174,7 +189,7 @@ struct MediaViewerView: View {
     }
 
     private var currentItem: MediaItem {
-        items[currentIndex]
+        filteredItems[currentIndex]
     }
 
     private var dismissGesture: some Gesture {
@@ -264,7 +279,7 @@ struct MediaViewerView: View {
             do {
                 let sourceImage = try await ImageCacheRepository.shared.image(for: url)
                 let enhancedImage = try await Task.detached(priority: .userInitiated) { () -> UIImage in
-                    let enhancer = await ImageEnhancer.shared
+                    let enhancer = ImageEnhancer.shared
                     guard let output = await enhancer.enhance(sourceImage) else {
                         throw EnhancementProcessingError.failed
                     }
