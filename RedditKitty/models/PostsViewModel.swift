@@ -167,15 +167,19 @@ import SwiftData
                     title: title,
                     isGallery: isGallery,
                     isVideo: true,
-                    imageURLs: thumbnails,
+                    imageURLs: nil,
                     videoURLs: videoURLs,
-                    author: author
+                    author: author,
+                    thumbs: thumbnails
                 )
             } else {
-                let imageURLs = extractImageURLs(from: childData, isGallery: isGallery)
+                var imageURLs = extractImageURLs(from: childData, isGallery: isGallery)
                 guard !title.isEmpty, !imageURLs.isEmpty, seenIDs.insert(id).inserted else {
                     return nil
                 }
+
+                let thumbs = imageURLs.count > 1 ? Array(arrayLiteral: imageURLs.removeFirst()) : imageURLs
+
                 return Post(
                     postId: id,
                     title: title,
@@ -183,7 +187,8 @@ import SwiftData
                     isVideo: false,
                     imageURLs: imageURLs,
                     videoURLs: nil,
-                    author: author
+                    author: author,
+                    thumbs: thumbs
                 )
             }
         }
@@ -333,12 +338,20 @@ import SwiftData
         let images = preview?["images"] as? [[String: Any]]
         let source = images?.first?["source"] as? [String: Any]
         let rawPreviewURL = source?["url"] as? String
+        let thumbs = images?.first?["resolutions"] as? [[String: Any]]
+        let thumURL = thumbs?.first?["url"] as? String
+
+        var urls = [String]()
+
+        if let thumURL {
+            urls.append(cleanURL(thumURL))
+        }
 
         if let rawPreviewURL {
             let cleanedURL = cleanURL(rawPreviewURL)
-            return cleanedURL.isEmpty ? [] : [cleanedURL]
+            urls.append(cleanedURL)
         }
-        return []
+        return urls
     }
 
     private func extractVideoThumbnailURL(childData: [String: Any]) -> [String] {
@@ -376,15 +389,23 @@ import SwiftData
     private func extractGallaryImages(childData: [String: Any]) -> [String] {
         let mediaMetadata = childData["media_metadata"] as? [String: Any] ?? [:]
 
-        return mediaMetadata.values.compactMap { item -> String? in
+        return mediaMetadata.values.flatMap { item -> [String] in
             guard let metadata = item as? [String: Any],
                   let mediaType = metadata["e"] as? String,
                   mediaType == "Image",
                   let source = metadata["s"] as? [String: Any],
                   let rawURL = source["u"] as? String else {
-                return nil
+                return []
             }
-            return cleanURL(rawURL)
+            let thumbs = metadata["p"] as? [[String: Any]]
+            let thumbUrl = thumbs?.first?["u"] as? String
+
+            var urls = [String]()
+            if let thumbUrl {
+                urls.append(cleanURL(thumbUrl))
+            }
+            urls.append(cleanURL(rawURL))
+            return urls
         }
     }
 }

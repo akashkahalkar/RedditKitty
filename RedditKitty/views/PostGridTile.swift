@@ -14,8 +14,9 @@ struct PostGridTile: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             if post.isVideo {
-                if let thumbnailURL = (post.imageURLs ?? []).first, !thumbnailURL.isEmpty {
-                    CachedRemoteImage(url: URL(string: thumbnailURL)) { image in
+                if let thumbnailURL = (post.thumbs ?? []).first, !thumbnailURL.isEmpty {
+                    CachedRemoteImage(url: URL(string: thumbnailURL)) { uiImage in
+                        let image = Image(uiImage: uiImage)
                         image
                             .resizable()
                             .frame(maxWidth: .infinity)
@@ -40,7 +41,8 @@ struct PostGridTile: View {
                     videoPlaceholder
                 }
             } else {
-                CachedRemoteImage(url: URL(string: (post.imageURLs ?? []).first ?? "")) { image in
+                CachedRemoteImage(url: URL(string: (post.thumbs ?? []).first ?? "")) { uiImage in
+                    let image = Image(uiImage: uiImage)
                     image
                         .resizable()
                         .frame(maxWidth: .infinity)

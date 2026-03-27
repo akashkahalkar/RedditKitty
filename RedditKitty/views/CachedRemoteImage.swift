@@ -7,7 +7,7 @@ final class CachedImageLoader: ObservableObject {
     enum Phase {
         case idle
         case loading
-        case success(Image)
+        case success(UIImage)
         case failure
     }
 
@@ -30,7 +30,7 @@ final class CachedImageLoader: ObservableObject {
             do {
                 let uiImage = try await ImageCacheRepository.shared.image(for: url)
                 guard !Task.isCancelled, currentURL == url else { return }
-                phase = .success(Image(uiImage: uiImage))
+                phase = .success(uiImage)
             } catch {
                 guard !Task.isCancelled, currentURL == url else { return }
                 phase = .failure
@@ -46,7 +46,7 @@ final class CachedImageLoader: ObservableObject {
 
 struct CachedRemoteImage<Content: View, Placeholder: View, Failure: View>: View {
     let url: URL?
-    @ViewBuilder let content: (Image) -> Content
+    @ViewBuilder let content: (UIImage) -> Content
     @ViewBuilder let placeholder: () -> Placeholder
     @ViewBuilder let failure: () -> Failure
 

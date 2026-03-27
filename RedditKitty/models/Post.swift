@@ -39,4 +39,5 @@ struct Post: Identifiable, Sendable, Equatable {
     let videoURLs: [String]?
     let author: String?
     var id: String { postId }
+    let thumbs: [String]?
 }

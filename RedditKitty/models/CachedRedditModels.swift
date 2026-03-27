@@ -37,6 +37,7 @@ final class CachedPost {
     var videoURLsBlob: Data
     var isVideo: Bool
     var author: String
+    var thumbURLsBlob: Data
 
     init(postType: PostType, post: Post, orderIndex: Int) {
         self.cacheKey = "\(postType.cacheKey)|\(post.postId)"
@@ -48,6 +49,7 @@ final class CachedPost {
         self.author = post.author ?? ""
         self.imageURLsBlob = (try? JSONEncoder().encode(post.imageURLs)) ?? Data()
         self.videoURLsBlob = (try? JSONEncoder().encode(post.videoURLs)) ?? Data()
+        self.thumbURLsBlob = (try? JSONEncoder().encode(post.thumbs)) ?? Data()
         self.isVideo = post.isVideo
     }
 
@@ -69,6 +71,15 @@ final class CachedPost {
         }
     }
 
+    var thumbUrls: [String] {
+        get {
+            (try? JSONDecoder().decode([String].self, from: thumbURLsBlob)) ?? []
+        }
+        set {
+            thumbURLsBlob = (try? JSONEncoder().encode(newValue)) ?? Data()
+        }
+    }
+
     var post: Post {
         Post(
             postId: postID,
@@ -77,7 +88,8 @@ final class CachedPost {
             isVideo: isVideo,
             imageURLs: imageURLs,
             videoURLs: videoURLs,
-            author: author
+            author: author,
+            thumbs: thumbUrls
         )
     }
 }

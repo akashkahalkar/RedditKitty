@@ -4,10 +4,11 @@ struct PostGalleryView: View {
     let post: Post
     let mediaItems: [MediaItem]
     @State private var selectedMediaIndex: Int?
+    let filter: MediaFilter
 
     private let columns = [
-        GridItem(.flexible(), spacing: 8),
-        GridItem(.flexible(), spacing: 8)
+        GridItem(.flexible(), spacing: 1),
+        GridItem(.flexible(), spacing: 1)
     ]
 
     var body: some View {
@@ -18,7 +19,7 @@ struct PostGalleryView: View {
                     .padding(.horizontal, 8)
 
                 LazyVGrid(columns: columns, spacing: 8) {
-                    ForEach(Array((post.imageURLs ?? []).enumerated()), id: \.offset) { index, imageURL in
+                    ForEach(Array((post.thumbs ?? []).enumerated()), id: \.offset) { index, imageURL in
                         if let selectedIndex = MediaSequenceBuilder.index(for: post, imageIndex: index, in: mediaItems) {
                             Button {
                                 selectedMediaIndex = selectedIndex
@@ -43,7 +44,7 @@ struct PostGalleryView: View {
             },
             set: { selectedMediaIndex = $0?.index }
         )) { selection in
-            MediaViewerView(items: mediaItems, initialIndex: selection.index)
+            MediaViewerView(items: mediaItems, initialIndex: selection.index, filter: filter, downloadProfileAction: nil)
         }
     }
 }

@@ -6,6 +6,7 @@ struct GalleryThumbnailView: View {
 
     var body: some View {
         CachedRemoteImage(url: URL(string: imageURL)) { image in
+            let image = Image(uiImage: image)
             image
                 .resizable()
                 .frame(maxWidth: .infinity)
