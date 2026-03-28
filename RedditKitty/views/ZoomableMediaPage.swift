@@ -16,12 +16,16 @@ struct ZoomableMediaPage: View {
             if let enhancedUIImage {
                 zoomableImage(enhancedUIImage, geometry: geometry)
             } else {
-                CachedRemoteImage(url: URL(string: item.mediaURL)) { image in
-                    zoomableImage(image, geometry: geometry)
-                } placeholder: {
-                    ProgressView()
-                        .tint(.white)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                CachedRemoteImage(url: URL(string: item.mediaURL), thumbnailURL: URL(string: item.thumbsURL ?? "")) { image in
+                    zoomableImage(image, geometry: geometry).transition(.opacity.combined(with: .scale(scale: 1.02)))
+                } placeholder: { thumbnail in
+                    if let thumbnail {
+                        zoomableImage(thumbnail, geometry: geometry).blur(radius: 1)
+                    } else {
+                        ProgressView()
+                            .tint(.white)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 } failure: {
                     ContentUnavailableView("Image Unavailable", systemImage: "photo")
                         .foregroundColor(.gray)

@@ -94,7 +94,6 @@ struct MediaViewerView: View {
             }
             if isUIVisible {
                 VStack {
-
                     Spacer()
                     infoSection
                 }

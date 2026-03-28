@@ -13,6 +13,7 @@ struct PostGalleryView: View {
     ]
 
     var body: some View {
+
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 Text(post.title)
@@ -27,7 +28,7 @@ struct PostGalleryView: View {
                                 selectedMediaIndex = selectedIndex
                             } label: {
                                 let imageURL = thumbnails[index]
-                                GalleryThumbnailView(imageURL: imageURL)
+                                GalleryThumbnailView(imageURL: imageURL, thumbnailURL: nil)
                             }
                             .buttonStyle(.plain)
                         }
@@ -39,7 +40,7 @@ struct PostGalleryView: View {
         }
         .navigationTitle("Gallery")
         .fullScreenCover(item: Binding(
-            get: { 
+            get: {
                 if let index = selectedMediaIndex {
                     return SelectionWrapper(index: index)
                 }
@@ -47,7 +48,12 @@ struct PostGalleryView: View {
             },
             set: { selectedMediaIndex = $0?.index }
         )) { selection in
-            MediaViewerView(items: mediaItems, initialIndex: selection.index, filter: filter, downloadProfileAction: nil)
+            MediaViewerView(
+                items: mediaItems,
+                initialIndex: selection.index,
+                filter: filter,
+                downloadProfileAction: nil
+            )
         }
     }
 }

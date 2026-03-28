@@ -14,16 +14,15 @@ struct SavedProfilesView: View {
     @State private var path = NavigationPath()
     @State private var postFilter: PostFilter = .user
 
-    private var filteredProfiles: [CachedListing] {
-        switch postFilter {
-            case .user:
-                return profiles.filter { $0.sourceKind == PostFilter.user.rawValue }
-            case .subreddit:
-                return profiles.filter { $0.sourceKind == PostFilter.subreddit.rawValue }
-        }
-    }
-
     var body: some View {
+
+        let pageBinding = Binding<Int>(
+            get: { PostFilter.allCases.firstIndex(of: postFilter) ?? 0 },
+            set: { postFilter = PostFilter.allCases[$0] }
+        )
+
+        let filterCases = Array(PostFilter.allCases.enumerated())
+
         NavigationStack(path: $path) {
             Group {
                 if profiles.isEmpty {
@@ -38,20 +37,35 @@ struct SavedProfilesView: View {
                     .padding(.horizontal, 8)
                     .padding(.top, 8)
 
-                    List {
-                        ForEach(filteredProfiles) { profile in
-                            NavigationLink(value: profile.sourceKey) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(profile.sourceName)
-                                        .font(.headline)
-                                    Text("\(profile.sourceKind.capitalized)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                    TabView(selection: pageBinding) {
+                        ForEach(filterCases, id: \.offset) { index, filter in
+                            let profilesForFilter = filteredProfiles(for: filter)
+                            List {
+                                ForEach(profilesForFilter) { profile in
+                                    NavigationLink(value: profile.sourceKey) {
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(profile.sourceName)
+                                                    .font(.headline)
+                                                Text(profile.sourceKind.capitalized)
+                                                    .font(.caption)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                            Spacer()
+                                            Button(role: .destructive) {
+                                                deleteProfile(profile)
+                                            } label: {
+                                                Image(systemName: "trash")
+                                                    .padding()
+                                            }.buttonStyle(.borderless)
+                                        }
+                                    }
                                 }
-                            }
+                            }.listStyle(.automatic)
+                            .tag(index) // ← each page needs a matching tag
                         }
-                        .onDelete(perform: deleteProfiles)
                     }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
                 }
             }
             .navigationTitle("Saved Profiles")
@@ -61,6 +75,10 @@ struct SavedProfilesView: View {
                 }
             }
         }
+    }
+
+    private func filteredProfiles(for filter: PostFilter) -> [CachedListing] {
+        profiles.filter { $0.sourceKind == filter.rawValue }
     }
 
     private func deleteProfiles(at offsets: IndexSet) {
@@ -86,9 +104,28 @@ struct SavedProfilesView: View {
             return
         }
 
+        let cacheURLs = Set(
+            posts
+                .flatMap { $0.imageURLs + $0.thumbUrls }
+                .compactMap(URL.init(string:))
+        )
+
+        if !cacheURLs.isEmpty {
+            Task {
+                await ImageCacheRepository.shared.removeCaches(for: Array(cacheURLs))
+            }
+        }
+
         for post in posts {
             modelContext.delete(post)
         }
+    }
+
+    private func deleteProfile(_ profile: CachedListing) {
+        let sourceKey = profile.sourceKey
+        deletePosts(for: sourceKey)
+        modelContext.delete(profile)
+        try? modelContext.save()
     }
 }
 

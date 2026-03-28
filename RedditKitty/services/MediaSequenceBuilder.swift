@@ -14,6 +14,7 @@ enum MediaSequenceBuilder {
                         postTitle: post.title,
                         author: post.author,
                         mediaURL: resolved.playbackURL,
+                        thumbsURL: post.thumbs?.first,
                         kind: .video,
                         videoDownloadURL: resolved.downloadURL,
                         imageIndexInPost: 0
@@ -23,11 +24,13 @@ enum MediaSequenceBuilder {
             }
 
             let imageItems = (post.imageURLs ?? []).enumerated().map { index, imageURL in
-                MediaItem(
+                let thumbURL = (post.thumbs?.indices.contains(index) == true) ? post.thumbs?[index] : nil
+                return MediaItem(
                     postId: post.postId,
                     postTitle: post.title,
                     author: post.author,
                     mediaURL: imageURL,
+                    thumbsURL: thumbURL,
                     kind: .image,
                     videoDownloadURL: nil,
                     imageIndexInPost: index

@@ -13,7 +13,6 @@ struct StatusSection: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(activeSourceType.displayLabel): \(activeSourceName)").font(.headline)
                     Text("Posts: \(viewModel.postCount)")
-                    Text("After: \(viewModel.after ?? "-")")
                 }
                 .padding()
                 .background(Color.secondary.opacity(0.1))

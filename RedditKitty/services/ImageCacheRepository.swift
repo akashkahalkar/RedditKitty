@@ -88,6 +88,20 @@ actor ImageCacheRepository {
         return image
     }
 
+    func removeCaches(for urls: [URL]) async {
+        let uniqueURLs = Set(urls)
+        for url in uniqueURLs {
+            removeCache(for: url)
+        }
+    }
+
+    private func removeCache(for url: URL) {
+        let cacheKey = url.absoluteString as NSString
+        memoryCache.removeObject(forKey: cacheKey)
+        let fileURL = cachedFileURL(for: url)
+        try? fileManager.removeItem(at: fileURL)
+    }
+
     // MARK: - Throttling
 
     /// Waits until a download slot is available, then atomically claims it.

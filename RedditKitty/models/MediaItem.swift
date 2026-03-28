@@ -11,6 +11,7 @@ struct MediaItem: Identifiable, Hashable, Sendable {
     let postTitle: String
     let author: String?
     let mediaURL: String
+    let thumbsURL: String?
     let kind: MediaKind
     let videoDownloadURL: String?
     let imageIndexInPost: Int
