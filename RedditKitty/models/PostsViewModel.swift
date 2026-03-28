@@ -343,20 +343,11 @@ import SwiftData
         let images = preview?["images"] as? [[String: Any]]
         let source = images?.first?["source"] as? [String: Any]
         let rawPreviewURL = source?["url"] as? String
-        let thumbs = images?.first?["resolutions"] as? [[String: Any]]
-        let thumURL = thumbs?.first?["url"] as? String
-
-        var urls = [String]()
-
-        if let thumURL {
-            urls.append(cleanURL(thumURL))
-        }
 
         if let rawPreviewURL {
-            let cleanedURL = cleanURL(rawPreviewURL)
-            urls.append(cleanedURL)
+            return [cleanURL(rawPreviewURL)]
         }
-        return urls
+        return []
     }
 
     private func extractSinglePostThumbnailURL(childData: [String: Any]) -> [String] {
