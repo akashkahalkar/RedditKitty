@@ -16,42 +16,63 @@ import SwiftUI
     }
 
     private(set) var phase: Phase = .idle
-    private var currentURL: URL?
-    private var task: Task<Void, Never>?
+    private let repository: ImageCacheRepository
+    private var streamTask: Task<Void, Never>?
+
+    init(repository: ImageCacheRepository = ImageCacheRepository.shared) {
+        self.repository = repository
+    }
 
     func load(from url: URL?, thumbnailURL: URL?) {
-        task?.cancel()
-        currentURL = url
+        cancel()
 
         guard let url else {
             phase = .failure
             return
         }
 
-        Task {
-            if let thumbnailURL {
-                let thumbImage = try await ImageCacheRepository.shared.image(for: thumbnailURL)
-                guard !Task.isCancelled, currentURL == url else { return }
-                if case .success = phase { return }
-                phase = .loading(thumbImage)
-            } else if case .idle = phase {
-                phase = .loading(nil)
+        streamTask = Task {
+            let stream = imageStream(for: url, thumbURL: thumbnailURL)
+            for await newPhase in stream {
+                self.phase = newPhase
             }
         }
-        task = Task {
-            do {
-                let uiImage = try await ImageCacheRepository.shared.image(for: url)
-                guard !Task.isCancelled, currentURL == url else { return }
-                phase = .success(uiImage)
-            } catch {
-                guard !Task.isCancelled, currentURL == url else { return }
-                phase = .failure
+    }
+
+    // 2. The Engine: Produces a stream of UI states
+    private func imageStream(for url: URL, thumbURL: URL?) -> AsyncStream<Phase> {
+        AsyncStream { continuation in
+            let innerTask = Task {
+                async let mainFetch = repository.image(for: url)
+
+                if let thumbURL {
+                    async let thumbFetch = try? repository.image(for: thumbURL)
+                    if let thumb = await thumbFetch {
+                        continuation.yield(.loading(thumb))
+                    }
+                } else {
+                    continuation.yield(.loading(nil))
+                }
+
+                do {
+                    let finalImage = try await mainFetch
+                    continuation.yield(.success(finalImage))
+                    continuation.finish()
+                } catch {
+                    continuation.yield(.failure)
+                    continuation.finish()
+                }
+            }
+
+            continuation.onTermination = { _ in
+                innerTask.cancel()
             }
         }
     }
 
     func cancel() {
-        task?.cancel()
-        task = nil
+        streamTask?.cancel()
+        streamTask = nil
+        phase = .idle
     }
 }
