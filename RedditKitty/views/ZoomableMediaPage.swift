@@ -1,10 +1,13 @@
 import SwiftUI
+import Nuke
+import NukeUI
 
 struct ZoomableMediaPage: View {
     let item: MediaItem
     let isActive: Bool
     let enhancedUIImage: UIImage?
     let onZoomStateChange: (Bool) -> Void
+    private let pipeline: ImagePipeline = .shared
 
     @State private var scale: CGFloat = 1
     @State private var lastScale: CGFloat = 1
@@ -14,24 +17,39 @@ struct ZoomableMediaPage: View {
     var body: some View {
         GeometryReader { geometry in
             if let enhancedUIImage {
-                zoomableImage(enhancedUIImage, geometry: geometry)
-            } else {
-                CachedRemoteImage(url: item.mediaURL, thumbnailURL: item.thumbsURL) { image in
-                    zoomableImage(image, geometry: geometry).transition(.opacity.combined(with: .scale(scale: 1.02)))
-                } placeholder: { thumbnail in
-                    if let thumbnail {
-                        zoomableImage(thumbnail, geometry: geometry).blur(radius: 1)
-                    } else {
-                        ProgressView()
-                            .tint(.white)
+                zoomableImage(Image(uiImage: enhancedUIImage), geometry: geometry)
+            } else if let url = URL(string: item.mediaURL) {
+                LazyImage(url: url) { state in
+                    if let image = state.image {
+                        zoomableImage(image, geometry: geometry)
+                    } else if state.error != nil {
+                        ContentUnavailableView("Image Unavailable", systemImage: "photo")
+                            .foregroundColor(.gray)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        // While main image loads, try to show the thumbnail
+                        if let thumbURLString = item.thumbsURL, let thumbURL = URL(string: thumbURLString) {
+                            LazyImage(url: thumbURL) { thumbState in
+                                if let thumbImage = thumbState.image {
+                                    zoomableImage(thumbImage, geometry: geometry)
+                                        .blur(radius: 2)
+                                } else {
+                                    ProgressView()
+                                        .tint(.white)
+                                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                }
+                            }
+                        } else {
+                            ProgressView()
+                                .tint(.white)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
                     }
-                } failure: {
-                    ContentUnavailableView("Image Unavailable", systemImage: "photo")
-                        .foregroundColor(.gray)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .id(item.id)
+            } else {
+                ContentUnavailableView("Image Unavailable", systemImage: "photo")
+                    .foregroundColor(.gray)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .onChange(of: isActive) { _, newValue in
@@ -41,9 +59,8 @@ struct ZoomableMediaPage: View {
         }
     }
 
-    private func zoomableImage(_ uiImage: UIImage, geometry: GeometryProxy) -> some View {
-        let image = Image(uiImage: uiImage)
-        return image
+    private func zoomableImage(_ image: Image, geometry: GeometryProxy) -> some View {
+        image
             .resizable()
             .scaledToFit()
             .scaleEffect(scale)
@@ -57,7 +74,8 @@ struct ZoomableMediaPage: View {
                     .onEnded {
                         toggleZoom()
                     }
-            )    }
+            )
+    }
 
     private var magnificationGesture: some Gesture {
         MagnificationGesture()

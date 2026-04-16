@@ -1,5 +1,6 @@
 import SwiftUI
 import AVKit
+import NukeUI
 
 struct VideoMediaPage: View {
     let item: MediaItem
@@ -53,30 +54,22 @@ struct VideoMediaPage: View {
 
     private var placeholderView: some View {
         Group {
-            if let thumbsURL = item.thumbsURL {
-                CachedRemoteImage(url: thumbsURL, thumbnailURL: nil) { image in
-                    let thumbnail = Image(uiImage: image)
-                    thumbnail
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity)
-                        .clipped()
-                        .overlay {
-                            Button {
-                                //updateIndex(index)
-                            } label: {
+            if let thumbsURL = item.thumbsURL, let url = URL(string: thumbsURL)  {
+                LazyImage(url: url) { state in
+                    if let thumbnail = state.image {
+                        thumbnail
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: .infinity)
+                            .clipped()
+                            .overlay {
                                 Image(systemName: "play.circle.fill")
                                     .font(.system(size: 34))
                                     .foregroundStyle(.white)
                                     .padding()
 
-                            }.buttonStyle(.glass)
-                        }
-                } placeholder: { _ in
-                    ProgressView()
-                        .tint(.white)
-                } failure: {
-                    RoundedRectangle(cornerRadius: 5).fill(.red)
+                            }
+                    }
                 }
             } else {
                 ProgressView()

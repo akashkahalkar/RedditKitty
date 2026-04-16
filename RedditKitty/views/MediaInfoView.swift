@@ -74,16 +74,14 @@ struct MediaInfoView: View {
                 if !item.isVideo, let url = URL.init(string: item.mediaURL) {
                     Button {
                         Task {
-                            let uiImage = try await ImageCacheRepository.shared.image(for: url)
-                            await MainActor.run {
-                                UIImageWriteToSavedPhotosAlbum(uiImage, nil, nil, nil)
-                            }
+                            // TODO: implemente code to get image from Nuke and show here
                         }
                     } label: {
                         Image(systemName: "photo.on.rectangle")
                             .font(.title2)
                             .foregroundStyle(.primary)
                     }
+                    .disabled(true)
                 }
             }
         }

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import NukeUI
 
 struct PostGridTile: View {
     let post: Post
@@ -13,30 +14,28 @@ struct PostGridTile: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            if let thumb = post.thumbs?.first {
-                CachedRemoteImage(url: thumb, thumbnailURL: nil) { uiImage in
-                    let image = Image(uiImage: uiImage)
-                    image
-                        .resizable()
-                        .frame(maxWidth: .infinity)
-                        .aspectRatio(aspectRatio, contentMode: .fill)
-                        .clipped()
-                        .overlay {
-                            if post.isVideo {
-                                TilePlaceholder()
+            if let thumb = post.thumbs?.first, let url = URL(string: thumb) {
+                LazyImage(url: url) { state in
+                    if let image = state.image {
+                        image
+                            .resizable()
+                            .frame(maxWidth: .infinity)
+                            .aspectRatio(aspectRatio, contentMode: .fill)
+                            .clipped()
+                            .overlay {
+                                if post.isVideo {
+                                    TilePlaceholder()
+                                }
                             }
-                        }
-                } placeholder: { _ in
-                    Rectangle()
-                        .fill(.gray.opacity(0.2))
-                        .aspectRatio(aspectRatio, contentMode: .fill)
-                        .overlay(alignment: .center) {
-                            ProgressView()
-                        }
-                } failure: {
-                    if post.isVideo {
-                        TilePlaceholder()
+                    } else {
+                        Rectangle()
+                            .fill(.gray.opacity(0.2))
+                            .aspectRatio(aspectRatio, contentMode: .fill)
+                            .overlay(alignment: .center) {
+                                ProgressView()
+                            }
                     }
+
                 }
             } else {
                 if post.isVideo {

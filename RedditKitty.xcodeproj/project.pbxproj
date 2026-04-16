@@ -6,6 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		3823EE022F91149400907BDA /* Nuke in Frameworks */ = {isa = PBXBuildFile; productRef = 3823EE012F91149400907BDA /* Nuke */; };
+		3823EE042F91149400907BDA /* NukeExtensions in Frameworks */ = {isa = PBXBuildFile; productRef = 3823EE032F91149400907BDA /* NukeExtensions */; };
+		3823EE062F91149400907BDA /* NukeUI in Frameworks */ = {isa = PBXBuildFile; productRef = 3823EE052F91149400907BDA /* NukeUI */; };
+		3823EE082F91149400907BDA /* NukeVideo in Frameworks */ = {isa = PBXBuildFile; productRef = 3823EE072F91149400907BDA /* NukeVideo */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		38149CFF2F6B200400F55C66 /* RedditKitty.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RedditKitty.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +30,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3823EE062F91149400907BDA /* NukeUI in Frameworks */,
+				3823EE022F91149400907BDA /* Nuke in Frameworks */,
+				3823EE042F91149400907BDA /* NukeExtensions in Frameworks */,
+				3823EE082F91149400907BDA /* NukeVideo in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +76,10 @@
 			);
 			name = RedditKitty;
 			packageProductDependencies = (
+				3823EE012F91149400907BDA /* Nuke */,
+				3823EE032F91149400907BDA /* NukeExtensions */,
+				3823EE052F91149400907BDA /* NukeUI */,
+				3823EE072F91149400907BDA /* NukeVideo */,
 			);
 			productName = RedditKitty;
 			productReference = 38149CFF2F6B200400F55C66 /* RedditKitty.app */;
@@ -94,6 +109,9 @@
 			);
 			mainGroup = 38149CF62F6B200400F55C66;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3823EE002F91149400907BDA /* XCRemoteSwiftPackageReference "Nuke" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 38149D002F6B200400F55C66 /* Products */;
 			projectDirPath = "";
@@ -342,6 +360,40 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3823EE002F91149400907BDA /* XCRemoteSwiftPackageReference "Nuke" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/kean/Nuke";
+			requirement = {
+				kind = exactVersion;
+				version = 13.0.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3823EE012F91149400907BDA /* Nuke */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3823EE002F91149400907BDA /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = Nuke;
+		};
+		3823EE032F91149400907BDA /* NukeExtensions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3823EE002F91149400907BDA /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeExtensions;
+		};
+		3823EE052F91149400907BDA /* NukeUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3823EE002F91149400907BDA /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeUI;
+		};
+		3823EE072F91149400907BDA /* NukeVideo */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3823EE002F91149400907BDA /* XCRemoteSwiftPackageReference "Nuke" */;
+			productName = NukeVideo;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 38149CF72F6B200400F55C66 /* Project object */;
 }

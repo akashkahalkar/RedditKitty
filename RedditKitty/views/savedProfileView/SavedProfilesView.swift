@@ -118,12 +118,6 @@ struct SavedProfilesView: View {
                 .compactMap(URL.init(string:))
         )
 
-        if !cacheURLs.isEmpty {
-            Task {
-                await ImageCacheRepository.shared.removeCaches(for: Array(cacheURLs))
-            }
-        }
-
         for post in posts {
             modelContext.delete(post)
         }

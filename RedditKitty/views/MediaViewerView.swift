@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Nuke
 
 struct MediaViewerView: View {
     @Environment(\.dismiss) private var dismiss
@@ -276,7 +277,7 @@ struct MediaViewerView: View {
             }
 
             do {
-                let sourceImage = try await ImageCacheRepository.shared.image(for: url)
+                let sourceImage = try await ImagePipeline.shared.imageTask(with: url).image
                 let enhancedImage = try await Task.detached(priority: .userInitiated) { () -> UIImage in
                     let enhancer = ImageEnhancer.shared
                     guard let output = await enhancer.enhance(sourceImage) else {
