@@ -25,48 +25,56 @@ struct SavedProfilesView: View {
 
         NavigationStack(path: $path) {
             Group {
-                if profiles.isEmpty {
-                    ContentUnavailableView("No Saved Profiles", systemImage: "person.crop.circle.badge.exclamationmark")
-                } else {
-                    Picker("Post filter", selection: $postFilter) {
-                        ForEach(PostFilter.allCases) { filter in
-                            Text(filter.rawValue).tag(filter)
-                        }
+                Picker("Post filter", selection: $postFilter) {
+                    ForEach(PostFilter.allCases) { filter in
+                        Text(filter.rawValue).tag(filter)
                     }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, 8)
-                    .padding(.top, 8)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 8)
+                .padding(.top, 8)
 
-                    TabView(selection: pageBinding) {
-                        ForEach(filterCases, id: \.offset) { index, filter in
-                            let profilesForFilter = filteredProfiles(for: filter)
+                TabView(selection: pageBinding) {
+                    ForEach(filterCases, id: \.offset) { index, filter in
+                        let profilesForFilter = filteredProfiles(for: filter)
+                        if !profilesForFilter.isEmpty {
                             List {
                                 ForEach(profilesForFilter) { profile in
-                                    NavigationLink(value: profile.sourceKey) {
-                                        HStack {
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(profile.sourceName)
-                                                    .font(.headline)
-                                                Text(profile.sourceKind.capitalized)
-                                                    .font(.caption)
-                                                    .foregroundStyle(.secondary)
-                                            }
-                                            Spacer()
-                                            Button(role: .destructive) {
-                                                deleteProfile(profile)
-                                            } label: {
-                                                Image(systemName: "trash")
-                                                    .padding()
-                                            }.buttonStyle(.borderless)
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(profile.sourceName)
+                                                .font(.headline)
+                                            Text(profile.sourceKind.capitalized)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
                                         }
+                                        Spacer()
+                                        Button(role: .destructive) {
+                                            deleteProfile(profile)
+                                        } label: {
+                                            Image(systemName: "trash")
+                                                .padding()
+                                        }.buttonStyle(.borderless)
+                                    }
+                                    .overlay {
+                                        NavigationLink(value: profile.sourceKey) {
+                                            EmptyView()
+                                        }
+                                        .opacity(0)
                                     }
                                 }
-                            }.listStyle(.automatic)
-                            .tag(index) // ← each page needs a matching tag
+                            }
+                            .tag(index)
+                            .listStyle(.plain)
+                        } else {
+                            EmptyState()
                         }
+
                     }
-                    .tabViewStyle(.page(indexDisplayMode: .never))
                 }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .padding(.horizontal)
+
             }
             .navigationTitle("Saved Profiles")
             .navigationDestination(for: String.self) { sourceKey in

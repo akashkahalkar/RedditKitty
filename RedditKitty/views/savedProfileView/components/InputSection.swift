@@ -1,5 +1,10 @@
 import SwiftUI
+#if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
+import SwiftData
 
 enum PostTypeInputFilter: String, Identifiable, CaseIterable {
 
@@ -40,7 +45,7 @@ struct InputSection: View {
                 TextField(placeHolder, text: $input)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
 
 
                 if !input.isEmpty {
@@ -48,7 +53,7 @@ struct InputSection: View {
                         input = ""
                     } label: {
                         Image(systemName: "xmark.rectangle.portrait")
-                    }.padding(.horizontal)
+                    }.padding(.leading)
                 }
 
                 if let pasteBoardString, !pasteBoardString.isEmpty {
@@ -69,9 +74,15 @@ struct InputSection: View {
                         }
                     } label: {
                         Image(systemName: "doc.on.doc.fill")
-                    }.padding(.trailing)
+                            .padding(.leading)
+                    }
+                    .padding(.trailing)
                 }
             }
+            .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(.gray, lineWidth: 1)
+            )
 
             HStack {
                 Button("Fetch") {
@@ -90,17 +101,31 @@ struct InputSection: View {
         .onAppear {
             updatePasteboard()
         }
+        #if canImport(UIKit)
         .onReceive(NotificationCenter.default.publisher(
             for: UIApplication.willEnterForegroundNotification
         )) { _ in
             updatePasteboard()
         }
+        #elseif canImport(AppKit)
+        .onReceive(NotificationCenter.default.publisher(
+            for: NSApplication.willBecomeActiveNotification
+        )) { _ in
+            updatePasteboard()
+        }
+        #endif
     }
 
     private func updatePasteboard() {
+        #if canImport(UIKit)
         if let pasteBoardString = UIPasteboard.general.string {
             self.pasteBoardString = pasteBoardString
         }
+        #elseif canImport(AppKit)
+        if let pasteBoardString = NSPasteboard.general.string(forType: .string) {
+            self.pasteBoardString = pasteBoardString
+        }
+        #endif
     }
 
     func parseRedditURL(_ urlString: String) -> PostType? {
