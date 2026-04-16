@@ -17,25 +17,28 @@ import SwiftUI
 
     private(set) var phase: Phase = .idle
     private let repository: ImageCacheRepository
-    private var streamTask: Task<Void, Never>?
 
     init(repository: ImageCacheRepository = ImageCacheRepository.shared) {
         self.repository = repository
     }
 
-    func load(from url: URL?, thumbnailURL: URL?) {
-        cancel()
+    func load(from url: String, thumbnailURL: String?, debounce: Bool = true) async {
 
-        guard let url else {
+        if debounce {
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+            if Task.isCancelled { return }
+        }
+
+        phase = .idle
+
+        guard let url = URL(string: url) else {
             phase = .failure
             return
         }
 
-        streamTask = Task {
-            let stream = imageStream(for: url, thumbURL: thumbnailURL)
-            for await newPhase in stream {
-                self.phase = newPhase
-            }
+        let stream = imageStream(for: url, thumbURL: URL(string: thumbnailURL ?? ""))
+        for await newPhase in stream {
+            self.phase = newPhase
         }
     }
 
@@ -68,11 +71,5 @@ import SwiftUI
                 innerTask.cancel()
             }
         }
-    }
-
-    func cancel() {
-        streamTask?.cancel()
-        streamTask = nil
-        phase = .idle
     }
 }

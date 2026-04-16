@@ -32,7 +32,7 @@ actor ImageCacheRepository {
     private let fileManager = FileManager.default
 
     private var activeDownloadsCount = 0
-    private let maxConcurrentDownloads = 6
+    private let maxConcurrentDownloads = 4
     private var downloadWaiters: [CheckedContinuation<Void, Never>] = []
 
     private init() {
@@ -74,6 +74,8 @@ actor ImageCacheRepository {
         // 3. Network download — throttled
         await throttle()
         defer { releaseSlot() }
+
+        try Task.checkCancellation()
 
         let (data, _) = try await URLSession.shared.data(from: url)
 
@@ -118,9 +120,8 @@ actor ImageCacheRepository {
 
     /// Frees a slot or hands it directly to the next waiter.
     private func releaseSlot() {
-        if let next = downloadWaiters.first {
-            downloadWaiters.removeFirst()
-            next.resume() // hands our slot over — count stays the same
+        if let next = downloadWaiters.popLast() {
+            next.resume()
         } else {
             activeDownloadsCount -= 1
         }
