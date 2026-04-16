@@ -14,7 +14,7 @@ struct PostGridTile: View {
     var body: some View {
         ZStack(alignment: .topTrailing) {
             if let thumb = post.thumbs?.first {
-                CachedRemoteImage(url: URL(string: thumb), thumbnailURL: nil) { uiImage in
+                CachedRemoteImage(url: thumb, thumbnailURL: nil) { uiImage in
                     let image = Image(uiImage: uiImage)
                     image
                         .resizable()

@@ -6,7 +6,7 @@ struct GalleryThumbnailView: View {
     private let aspectRatio = 0.75
 
     var body: some View {
-        CachedRemoteImage(url: URL(string: imageURL), thumbnailURL: URL(string: thumbnailURL ?? "")) { image in
+        CachedRemoteImage(url: imageURL, thumbnailURL: thumbnailURL) { image in
             let image = Image(uiImage: image)
             image
                 .resizable()

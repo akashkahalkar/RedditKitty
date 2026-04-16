@@ -53,8 +53,8 @@ struct VideoMediaPage: View {
 
     private var placeholderView: some View {
         Group {
-            if let thumbsURL = item.thumbsURL, let url = URL(string: thumbsURL) {
-                CachedRemoteImage(url: url, thumbnailURL: nil) { image in
+            if let thumbsURL = item.thumbsURL {
+                CachedRemoteImage(url: thumbsURL, thumbnailURL: nil) { image in
                     let thumbnail = Image(uiImage: image)
                     thumbnail
                         .resizable()

@@ -2,8 +2,8 @@ import SwiftUI
 import UIKit
 
 struct CachedRemoteImage<Content: View, Placeholder: View, Failure: View>: View {
-    let url: URL?
-    let thumbnailURL: URL?
+    let url: String
+    let thumbnailURL: String?
     @ViewBuilder let content: (UIImage) -> Content
     @ViewBuilder let placeholder: (UIImage?) -> Placeholder
     @ViewBuilder let failure: () -> Failure
@@ -24,10 +24,7 @@ struct CachedRemoteImage<Content: View, Placeholder: View, Failure: View>: View 
             }
         }
         .task(id: url) {
-            loader.load(from: url, thumbnailURL: thumbnailURL)
-        }
-        .onDisappear {
-            loader.cancel()
+            await loader.load(from: url, thumbnailURL: thumbnailURL)
         }
     }
 }

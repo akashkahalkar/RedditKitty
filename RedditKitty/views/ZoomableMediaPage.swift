@@ -16,7 +16,7 @@ struct ZoomableMediaPage: View {
             if let enhancedUIImage {
                 zoomableImage(enhancedUIImage, geometry: geometry)
             } else {
-                CachedRemoteImage(url: URL(string: item.mediaURL), thumbnailURL: URL(string: item.thumbsURL ?? "")) { image in
+                CachedRemoteImage(url: item.mediaURL, thumbnailURL: item.thumbsURL) { image in
                     zoomableImage(image, geometry: geometry).transition(.opacity.combined(with: .scale(scale: 1.02)))
                 } placeholder: { thumbnail in
                     if let thumbnail {

@@ -32,7 +32,7 @@ actor ImageCacheRepository {
     private let fileManager = FileManager.default
 
     private var activeDownloadsCount = 0
-    private let maxConcurrentDownloads = 4
+    private let maxConcurrentDownloads = 6
     private var downloadWaiters: [CheckedContinuation<Void, Never>] = []
 
     private init() {
@@ -64,12 +64,12 @@ actor ImageCacheRepository {
             return cached
         }
 
-        // 2. Disk cache — off actor via DiskCache actor
-        let fileURL = cachedFileURL(for: url)
-        if let diskImage = await diskCache.read(from: fileURL) {
-            memoryCache.setObject(diskImage, forKey: cacheKey)
-            return diskImage
-        }
+//        // 2. Disk cache — off actor via DiskCache actor
+//        let fileURL = cachedFileURL(for: url)
+//        if let diskImage = await diskCache.read(from: fileURL) {
+//            memoryCache.setObject(diskImage, forKey: cacheKey)
+//            return diskImage
+//        }
 
         // 3. Network download — throttled
         await throttle()
@@ -85,7 +85,7 @@ actor ImageCacheRepository {
 
         let cost = Int(image.size.width * image.size.height * 4)
         memoryCache.setObject(image, forKey: cacheKey, cost: cost)
-        await diskCache.write(data, to: fileURL)
+        //await diskCache.write(data, to: fileURL)
 
         return image
     }

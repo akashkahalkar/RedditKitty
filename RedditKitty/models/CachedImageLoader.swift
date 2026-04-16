@@ -26,7 +26,10 @@ import SwiftUI
 
         if debounce {
             try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
-            if Task.isCancelled { return }
+            if Task.isCancelled {
+                print("---> return due to debound")
+                return
+            }
         }
 
         phase = .idle
@@ -46,6 +49,7 @@ import SwiftUI
     private func imageStream(for url: URL, thumbURL: URL?) -> AsyncStream<Phase> {
         AsyncStream { continuation in
             let innerTask = Task {
+                print("---> started downlaod", url)
                 async let mainFetch = repository.image(for: url)
 
                 if let thumbURL {
